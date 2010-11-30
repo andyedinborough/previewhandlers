@@ -1,7 +1,5 @@
 using System.IO;
-using System.Xml.Linq;
 using Wayloop.Highlight;
-using Wayloop.Highlight.Configuration;
 using Wayloop.Highlight.Engines;
 
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
@@ -20,9 +18,8 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 
         public static string GetHighlightedHtml(string definition, string source)
         {
-            var configuration = new XmlConfiguration(XDocument.Load(("Definitions.xml")));
             var engine = new HtmlEngine();
-            var highlighter = new Highlighter(configuration, engine);
+            var highlighter = new Highlighter(engine);
             var sourceHtml = highlighter.Highlight(source, definition);
 
             sourceHtml = string.Format("<pre>{0}</pre>", sourceHtml);
