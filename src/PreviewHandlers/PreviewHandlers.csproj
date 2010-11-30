@@ -72,7 +72,7 @@
     <Compile Include="Handlers\CssPreviewHandler.cs" />
     <Compile Include="Handlers\DiffPreviewHandler.cs" />
     <Compile Include="Handlers\DosPreviewHandler.cs" />
-    <Compile Include="Handlers\JScriptPreviewHandler.cs" />
+    <Compile Include="Handlers\JavaScriptPreviewHandler.cs" />
     <Compile Include="Handlers\RubyPreviewHandler.cs" />
     <Compile Include="Handlers\SqlPreviewHandler.cs" />
     <Compile Include="Handlers\VbPreviewHandler.cs" />

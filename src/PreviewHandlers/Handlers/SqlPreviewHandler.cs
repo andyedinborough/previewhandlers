@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers.Handlers
 {
-	[PreviewHandler("T-SQL Code Preview Handler", ".sql", "{5b977a6a-8de0-11db-96b6-005056c00008}")]
+	[PreviewHandler("SQL Code Preview Handler", ".sql", "{5b977a6a-8de0-11db-96b6-005056c00008}")]
 	[ProgId("FuelAdvance.PreviewHandlerPack.PreviewHandlers.Handlers.SqlPreviewHandler")]
 	[Guid("303ab58a-8de0-11db-96b6-005056c00008")]
 	[ClassInterface(ClassInterfaceType.None)]
@@ -11,7 +11,7 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers.Handlers
 	{
 		protected override PreviewHandlerControl CreatePreviewHandlerControl()
 		{
-			return new CodePreviewHandlerControl("T-SQL");
+			return new CodePreviewHandlerControl("SQL");
 		}
 	}
 }
