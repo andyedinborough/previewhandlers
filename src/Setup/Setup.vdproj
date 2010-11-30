@@ -21,18 +21,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_A78E28911AF50D5DA41139995C721CAD"
+        "OwnerKey" = "8:_DFC5EE54729A421CA227677B358AD244"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_DFC5EE54729A421CA227677B358AD244"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_F5A4D03BB060AF04C6008AACB95626B5"
-        "OwnerKey" = "8:_DFC5EE54729A421CA227677B358AD244"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_DFC5EE54729A421CA227677B358AD244"
         "MsmSig" = "8:_UNDEFINED"
@@ -40,7 +40,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_F5A4D03BB060AF04C6008AACB95626B5"
+        "OwnerKey" = "8:_A78E28911AF50D5DA41139995C721CAD"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -70,10 +70,10 @@
             "ComponentsUrl" = "8:"
                 "Items"
                 {
-                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Net.Framework.2.0"
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0"
                     {
-                    "Name" = "8:Microsoft .NET Framework 2.0"
-                    "ProductCode" = "8:Microsoft.Net.Framework.2.0"
+                    "Name" = "8:Microsoft .NET Framework 4 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0"
                     }
                 }
             }
@@ -153,9 +153,9 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "Version" = "8:2.0.50727"
+                "FrameworkVersion" = "8:.NETFramework,Version=v4.0"
                 "AllowLaterVersions" = "11:FALSE"
-                "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=9832"
+                "InstallUrl" = "8:http://www.microsoft.com/downloads/en/details.aspx?FamilyID=9cfb2d51-5ff4-4491-b0e5-b386f32c0992&displaylang=en"
                 }
             }
         }
@@ -181,20 +181,20 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_F5A4D03BB060AF04C6008AACB95626B5"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_A78E28911AF50D5DA41139995C721CAD"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Lonwas.Highlight, Version=2.3.2542.42987, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Wayloop.Highlight, Version=3.0.3986.24279, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_F5A4D03BB060AF04C6008AACB95626B5"
+                    "_A78E28911AF50D5DA41139995C721CAD"
                     {
-                    "Name" = "8:Lonwas.Highlight.dll"
+                    "Name" = "8:Wayloop.Highlight.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:Lonwas.Highlight.dll"
+            "SourcePath" = "8:Wayloop.Highlight.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_39BABF85656641F4B0B8DFF2E39762F8"
@@ -262,14 +262,16 @@
         "MsiBootstrapper"
         {
         "LangId" = "3:1033"
+        "RequiresElevation" = "11:FALSE"
         }
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Preview Handler Pack"
         "ProductCode" = "8:{56C899E7-F067-4AE3-9CBE-788840205808}"
-        "PackageCode" = "8:{93DA0FFB-01DD-4C09-8587-CD845A8DD6CE}"
+        "PackageCode" = "8:{5845E1C4-04B0-4835-95BA-2D4FF78BA1A1}"
         "UpgradeCode" = "8:{81C32A02-02DF-4461-92AC-64D14B9183E0}"
+        "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
