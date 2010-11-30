@@ -11,8 +11,8 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
         public static string GetHighlightedHtml(string definition, Stream stream)
         {
             //Read the source code in
-            string sourceText = string.Empty;
-            using (StreamReader reader = new StreamReader(stream))
+            string sourceText;
+            using (var reader = new StreamReader(stream))
                 sourceText = reader.ReadToEnd();
 
             return GetHighlightedHtml(definition, sourceText);
@@ -22,11 +22,11 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
         {
             var configuration = new XmlConfiguration(XDocument.Load(("Definitions.xml")));
             var engine = new HtmlEngine();
-            Highlighter highlighter = new Highlighter(configuration, engine);
-            string sourceHtml = highlighter.Highlight(source, definition);
+            var highlighter = new Highlighter(configuration, engine);
+            var sourceHtml = highlighter.Highlight(source, definition);
 
-            //Preserve the layout
             sourceHtml = string.Format("<pre>{0}</pre>", sourceHtml);
+
             return sourceHtml;
         }
     }

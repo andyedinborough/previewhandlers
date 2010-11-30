@@ -1,44 +1,41 @@
+using System;
+using System.IO;
+using System.Runtime.InteropServices.ComTypes;
+using FuelAdvance.PreviewHandlerPack.PreviewHandlers.ComInterop;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 {
-	using System;
-	using System.IO;
-	using System.Runtime.InteropServices.ComTypes;
-
-	using FuelAdvance.PreviewHandlerPack.PreviewHandlers.ComInterop;
-
 	public abstract class StreamBasedPreviewHandler : PreviewHandler, IInitializeWithStream
 	{
-		private IStream _stream;
-		private uint _streamMode;
-
+		private IStream stream;
+		
 		void IInitializeWithStream.Initialize(IStream pstream, uint grfMode)
 		{
-			_stream = pstream;
-			_streamMode = grfMode;
+			stream = pstream;
 		}
 
 		protected override void Load(PreviewHandlerControl c)
 		{
-			c.Load(new ReadOnlyIStreamStream(_stream));
+			c.Load(new ReadOnlyIStreamStream(stream));
 		}
 
 		private class ReadOnlyIStreamStream : Stream
 		{
-			private IStream _stream;
+			IStream stream;
 
 			public ReadOnlyIStreamStream(IStream stream)
 			{
 				if (stream == null) throw new ArgumentNullException("stream");
-				_stream = stream;
+				this.stream = stream;
 			}
 
 			protected override void Dispose(bool disposing)
 			{
-				_stream = null;
+				stream = null;
 				base.Dispose(disposing);
 			}
 
-			private void ThrowIfDisposed() { if (_stream == null) throw new ObjectDisposedException(GetType().Name); }
+			private void ThrowIfDisposed() { if (stream == null) throw new ObjectDisposedException(GetType().Name); }
 
 			public unsafe override int Read(byte[] buffer, int offset, int count)
 			{
@@ -48,27 +45,27 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 				if (offset < 0) throw new ArgumentNullException("offset");
 				if (count < 0) throw new ArgumentNullException("count");
 
-				int bytesRead = 0;
+				var bytesRead = 0;
 				if (count > 0)
 				{
-					IntPtr ptr = new IntPtr(&bytesRead);
+					var ptr = new IntPtr(&bytesRead);
 					if (offset == 0)
 					{
 						if (count > buffer.Length) throw new ArgumentOutOfRangeException("count");
-						_stream.Read(buffer, count, ptr);
+						stream.Read(buffer, count, ptr);
 					}
 					else
 					{
-						byte[] tempBuffer = new byte[count];
-						_stream.Read(tempBuffer, count, ptr);
+						var tempBuffer = new byte[count];
+						stream.Read(tempBuffer, count, ptr);
 						if (bytesRead > 0) Array.Copy(tempBuffer, 0, buffer, offset, bytesRead);
 					}
 				}
 				return bytesRead;
 			}
 
-			public override bool CanRead { get { return _stream != null; } }
-			public override bool CanSeek { get { return _stream != null; } }
+			public override bool CanRead { get { return stream != null; } }
+			public override bool CanSeek { get { return stream != null; } }
 			public override bool CanWrite { get { return false; } }
 
 			public override long Length
@@ -78,7 +75,7 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 					ThrowIfDisposed();
 					const int STATFLAG_NONAME = 1;
 					STATSTG stats;
-					_stream.Stat(out stats, STATFLAG_NONAME);
+					stream.Stat(out stats, STATFLAG_NONAME);
 					return stats.cbSize;
 				}
 			}
@@ -101,8 +98,8 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 			{
 				ThrowIfDisposed();
 				long pos = 0;
-				IntPtr posPtr = new IntPtr((void*)&pos);
-				_stream.Seek(offset, (int)origin, posPtr);
+				var posPtr = new IntPtr(&pos);
+				stream.Seek(offset, (int)origin, posPtr);
 				return pos;
 			}
 

@@ -1,12 +1,12 @@
+using System;
+using System.Collections;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Configuration.Install;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 {
-	using System;
-	using System.Collections;
-	using System.ComponentModel;
-	using System.Diagnostics;
-	using System.Runtime.InteropServices;
-	using System.Configuration.Install;
-
 	[RunInstaller(true)]
 	public class Installer : System.Configuration.Install.Installer
 	{
@@ -15,11 +15,10 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
             try
             {
                 base.Install(stateSaver);
-                RegistrationServices regsrv = new RegistrationServices();
-                if (!regsrv.RegisterAssembly(this.GetType().Assembly, AssemblyRegistrationFlags.SetCodeBase))
-                {
+            
+                var registrationServices = new RegistrationServices();
+                if (!registrationServices.RegisterAssembly(GetType().Assembly, AssemblyRegistrationFlags.SetCodeBase))
                     throw new InstallException("Failed to register for COM interop.");
-                }
             }
             catch (Exception ex)
             {
@@ -31,11 +30,10 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 		public override void Uninstall(IDictionary savedState)
 		{
             base.Uninstall(savedState);
-			RegistrationServices regsrv = new RegistrationServices();
-			if (!regsrv.UnregisterAssembly(this.GetType().Assembly))
-			{
-                throw new InstallException("Failed to unregister for COM interop.");
-			}
+
+			var registrationServices = new RegistrationServices();
+            if (!registrationServices.UnregisterAssembly(GetType().Assembly))
+			    throw new InstallException("Failed to unregister for COM interop.");
         }
 	}
 }

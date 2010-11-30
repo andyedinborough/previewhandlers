@@ -1,9 +1,8 @@
+using System.Drawing;
+using System.Runtime.InteropServices;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers.ComInterop
 {
-	using System;
-	using System.Drawing;
-	using System.Runtime.InteropServices;
-
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct RECT
 	{

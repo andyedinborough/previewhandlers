@@ -1,258 +1,251 @@
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using FuelAdvance.PreviewHandlerPack.PreviewHandlers.ComInterop;
+using Microsoft.Win32;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 {
-	using System;
-	using System.ComponentModel;
-	using System.Diagnostics;
-	using System.Drawing;
-	using System.IO;
-	using System.Runtime.InteropServices;
-	using System.Runtime.InteropServices.ComTypes;
-	using System.Threading;
-	using System.Windows.Forms;
+    public abstract class PreviewHandler : IPreviewHandler, IPreviewHandlerVisuals, IOleWindow, IObjectWithSite
+    {
+        bool showPreview;
+        readonly PreviewHandlerControl previewControl;
+        IntPtr parentHwnd;
+        Rectangle windowBounds;
+        object unkSite;
+        IPreviewHandlerFrame frame;
 
-	using FuelAdvance.PreviewHandlerPack.PreviewHandlers.ComInterop;
+        protected PreviewHandler()
+        {
+            previewControl = CreatePreviewHandlerControl(); // NOTE: shouldn't call virtual function from constructor; see article for more information
+            previewControl.Handle.GetHashCode();
+            previewControl.BackColor = SystemColors.Window;
+        }
 
-	using Microsoft.Win32;
+        protected abstract PreviewHandlerControl CreatePreviewHandlerControl();
 
-	public abstract class PreviewHandler : IPreviewHandler, IPreviewHandlerVisuals, IOleWindow, IObjectWithSite
-	{
-		private bool _showPreview;
-		private PreviewHandlerControl _previewControl;
-		private IntPtr _parentHwnd;
-		private Rectangle _windowBounds;
-		private object _unkSite;
-		private IPreviewHandlerFrame _frame;
+        private void InvokeOnPreviewThread(MethodInvoker d)
+        {
+            previewControl.Invoke(d);
+        }
 
-		protected PreviewHandler()
-		{
-			_previewControl = CreatePreviewHandlerControl(); // NOTE: shouldn't call virtual function from constructor; see article for more information
-			IntPtr forceCreation = _previewControl.Handle;
-			_previewControl.BackColor = SystemColors.Window;
-		}
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
-		protected abstract PreviewHandlerControl CreatePreviewHandlerControl();
+        private void UpdateWindowBounds()
+        {
+            if (!showPreview) return;
+            
+            InvokeOnPreviewThread(delegate
+            {
+                SetParent(previewControl.Handle, parentHwnd);
+                previewControl.Bounds = windowBounds;
+                previewControl.Visible = true;
+            });
+        }
 
-		private void InvokeOnPreviewThread(MethodInvoker d)
-		{
-			_previewControl.Invoke(d);
-		}
+        void IPreviewHandler.SetWindow(IntPtr hwnd, ref RECT rect)
+        {
+            parentHwnd = hwnd;
+            windowBounds = rect.ToRectangle();
+            UpdateWindowBounds();
+        }
 
-		[DllImport("user32.dll")]
-		private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+        void IPreviewHandler.SetRect(ref RECT rect)
+        {
+            windowBounds = rect.ToRectangle();
+            UpdateWindowBounds();
+        }
 
-		private void UpdateWindowBounds()
-		{
-			if (_showPreview)
-			{
-				InvokeOnPreviewThread(delegate()
-				{
-					SetParent(_previewControl.Handle, _parentHwnd);
-					_previewControl.Bounds = _windowBounds;
-					_previewControl.Visible = true;
-				});
-			}
-		}
+        protected abstract void Load(PreviewHandlerControl c);
 
-		void IPreviewHandler.SetWindow(IntPtr hwnd, ref RECT rect)
-		{
-			_parentHwnd = hwnd;
-			_windowBounds = rect.ToRectangle();
-			UpdateWindowBounds();
-		}
+        void IPreviewHandler.DoPreview()
+        {
+            showPreview = true;
+            InvokeOnPreviewThread(delegate
+            {
+                try
+                {
+                    Load(previewControl);
+                }
+                catch (Exception exc)
+                {
+                    previewControl.Controls.Clear();
+                    var text = new TextBox
+                    {
+                        ReadOnly = true,
+                        Multiline = true,
+                        Dock = DockStyle.Fill,
+                        Text = exc.ToString()
+                    };
+                    previewControl.Controls.Add(text);
+                }
+                UpdateWindowBounds();
+            });
+        }
 
-		void IPreviewHandler.SetRect(ref RECT rect)
-		{
-			_windowBounds = rect.ToRectangle();
-			UpdateWindowBounds();
-		}
+        void IPreviewHandler.Unload()
+        {
+            showPreview = false;
+            InvokeOnPreviewThread(delegate
+            {
+                previewControl.Visible = false;
+                previewControl.Unload();
+            });
+        }
 
-		protected abstract void Load(PreviewHandlerControl c);
+        void IPreviewHandler.SetFocus()
+        {
+            InvokeOnPreviewThread(() => previewControl.Focus());
+        }
 
-		void IPreviewHandler.DoPreview()
-		{
-			_showPreview = true;
-			InvokeOnPreviewThread(delegate()
-			{
-				try
-				{
-					Load(_previewControl);
-				}
-				catch (Exception exc)
-				{
-					_previewControl.Controls.Clear();
-					TextBox text = new TextBox();
-					text.ReadOnly = true;
-					text.Multiline = true;
-					text.Dock = DockStyle.Fill;
-					text.Text = exc.ToString();
-					_previewControl.Controls.Add(text);
-				}
-				UpdateWindowBounds();
-			});
-		}
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr GetFocus();
 
-		void IPreviewHandler.Unload()
-		{
-			_showPreview = false;
-			InvokeOnPreviewThread(delegate()
-			{
-				_previewControl.Visible = false;
-				_previewControl.Unload();
-			});
-		}
+        void IPreviewHandler.QueryFocus(out IntPtr phwnd)
+        {
+            var result = IntPtr.Zero;
+            InvokeOnPreviewThread(delegate { result = GetFocus(); });
+            phwnd = result;
+            if (phwnd == IntPtr.Zero) throw new Win32Exception();
+        }
 
-		void IPreviewHandler.SetFocus()
-		{
-			InvokeOnPreviewThread(delegate() { _previewControl.Focus(); });
-		}
+        uint IPreviewHandler.TranslateAccelerator(ref MSG pmsg)
+        {
+            if (frame != null) return frame.TranslateAccelerator(ref pmsg);
+            const uint S_FALSE = 1;
+            return S_FALSE;
+        }
 
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		private static extern IntPtr GetFocus();
+        void IPreviewHandlerVisuals.SetBackgroundColor(COLORREF color)
+        {
+            var c = color.Color;
+            InvokeOnPreviewThread(delegate { previewControl.BackColor = c; });
+        }
 
-		void IPreviewHandler.QueryFocus(out IntPtr phwnd)
-		{
-			IntPtr result = IntPtr.Zero;
-			InvokeOnPreviewThread(delegate() { result = GetFocus(); });
-			phwnd = result;
-			if (phwnd == IntPtr.Zero) throw new Win32Exception();
-		}
+        void IPreviewHandlerVisuals.SetTextColor(COLORREF color)
+        {
+            var c = color.Color;
+            InvokeOnPreviewThread(delegate { previewControl.ForeColor = c; });
+        }
 
-		uint IPreviewHandler.TranslateAccelerator(ref MSG pmsg)
-		{
-			if (_frame != null) return _frame.TranslateAccelerator(ref pmsg);
-			const uint S_FALSE = 1;
-			return S_FALSE;
-		}
+        void IPreviewHandlerVisuals.SetFont(ref LOGFONT plf)
+        {
+            var f = Font.FromLogFont(plf);
+            InvokeOnPreviewThread(delegate { previewControl.Font = f; });
+        }
 
-		void IPreviewHandlerVisuals.SetBackgroundColor(COLORREF color)
-		{
-			Color c = color.Color;
-			InvokeOnPreviewThread(delegate() { _previewControl.BackColor = c; });
-		}
+        void IOleWindow.GetWindow(out IntPtr phwnd)
+        {
+            phwnd = previewControl.Handle;
+        }
 
-		void IPreviewHandlerVisuals.SetTextColor(COLORREF color)
-		{
-			Color c = color.Color;
-			InvokeOnPreviewThread(delegate() { _previewControl.ForeColor = c; });
-		}
+        void IOleWindow.ContextSensitiveHelp(bool fEnterMode)
+        {
+            throw new NotImplementedException();
+        }
 
-		void IPreviewHandlerVisuals.SetFont(ref LOGFONT plf)
-		{
-			Font f = Font.FromLogFont(plf);
-			InvokeOnPreviewThread(delegate() { _previewControl.Font = f; });
-		}
+        void IObjectWithSite.SetSite(object pUnkSite)
+        {
+            unkSite = pUnkSite;
+            frame = unkSite as IPreviewHandlerFrame;
+        }
 
-		void IOleWindow.GetWindow(out IntPtr phwnd)
-		{
-			phwnd = IntPtr.Zero;
-			phwnd = _previewControl.Handle;
-		}
+        void IObjectWithSite.GetSite(ref Guid riid, out object ppvSite)
+        {
+            ppvSite = unkSite;
+        }
 
-		void IOleWindow.ContextSensitiveHelp(bool fEnterMode)
-		{
-			throw new NotImplementedException();
-		}
+        [ComRegisterFunction]
+        public static void Register(Type t)
+        {
+            if (t == null) return;
+            if (!t.IsSubclassOf(typeof(PreviewHandler))) return;
+            
+            var attrs = t.GetCustomAttributes(typeof(PreviewHandlerAttribute), true);
+            if (attrs.Length != 1) return;
 
-		void IObjectWithSite.SetSite(object pUnkSite)
-		{
-			_unkSite = pUnkSite;
-			_frame = _unkSite as IPreviewHandlerFrame;
-		}
+            var attr = (PreviewHandlerAttribute)attrs[0];
+            RegisterPreviewHandler(attr.Name, attr.Extension, t.GUID.ToString("B"), attr.AppId);
+        }
 
-		void IObjectWithSite.GetSite(ref Guid riid, out object ppvSite)
-		{
-			ppvSite = _unkSite;
-		}
+        [ComUnregisterFunction]
+        public static void Unregister(Type t)
+        {
+            if (t == null) return;
+            if (!t.IsSubclassOf(typeof(PreviewHandler))) return;
+            
+            var attrs = t.GetCustomAttributes(typeof(PreviewHandlerAttribute), true);
+            if (attrs.Length != 1) return;
 
-		[ComRegisterFunction]
-		public static void Register(Type t)
-		{
-			if (t != null && t.IsSubclassOf(typeof(PreviewHandler)))
-			{
-				object[] attrs = (object[])t.GetCustomAttributes(typeof(PreviewHandlerAttribute), true);
-				if (attrs != null && attrs.Length == 1)
-				{
-					PreviewHandlerAttribute attr = attrs[0] as PreviewHandlerAttribute;
-					RegisterPreviewHandler(attr.Name, attr.Extension, t.GUID.ToString("B"), attr.AppId);
-				}
-			}
-		}
+            var attr = (PreviewHandlerAttribute)attrs[0];
+            UnregisterPreviewHandler(attr.Extension, t.GUID.ToString("B"), attr.AppId);
+        }
 
-		[ComUnregisterFunction]
-		public static void Unregister(Type t)
-		{
-			if (t != null && t.IsSubclassOf(typeof(PreviewHandler)))
-			{
-				object[] attrs = (object[])t.GetCustomAttributes(typeof(PreviewHandlerAttribute), true);
-				if (attrs != null && attrs.Length == 1)
-				{
-					PreviewHandlerAttribute attr = attrs[0] as PreviewHandlerAttribute;
-					UnregisterPreviewHandler(attr.Extension, t.GUID.ToString("B"), attr.AppId);
-				}
-			}
-		}
+        protected static void RegisterPreviewHandler(string name, string extensions, string previewerGuid, string appId)
+        {
+            // Create a new prevhost AppID so that this always runs in its own isolated process
+            using (var appIdsKey = Registry.ClassesRoot.OpenSubKey("AppID", true))
+            using (var appIdKey = appIdsKey.CreateSubKey(appId))
+            {
+                appIdKey.SetValue("DllSurrogate", @"%SystemRoot%\system32\prevhost.exe", RegistryValueKind.ExpandString);
+            }
 
-		protected static void RegisterPreviewHandler(string name, string extensions, string previewerGuid, string appId)
-		{
-			// Create a new prevhost AppID so that this always runs in its own isolated process
-			using (RegistryKey appIdsKey = Registry.ClassesRoot.OpenSubKey("AppID", true))
-			using (RegistryKey appIdKey = appIdsKey.CreateSubKey(appId))
-			{
-				appIdKey.SetValue("DllSurrogate", @"%SystemRoot%\system32\prevhost.exe", RegistryValueKind.ExpandString);
-			}
+            // Add preview handler to preview handler list
+            using (var handlersKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PreviewHandlers", true))
+            {
+                handlersKey.SetValue(previewerGuid, name, RegistryValueKind.String);
+            }
 
-			// Add preview handler to preview handler list
-			using (RegistryKey handlersKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PreviewHandlers", true))
-			{
-				handlersKey.SetValue(previewerGuid, name, RegistryValueKind.String);
-			}
+            // Modify preview handler registration
+            using (var clsidKey = Registry.ClassesRoot.OpenSubKey("CLSID"))
+            using (var idKey = clsidKey.OpenSubKey(previewerGuid, true))
+            {
+                idKey.SetValue("DisplayName", name, RegistryValueKind.String);
+                idKey.SetValue("AppID", appId, RegistryValueKind.String);
+                //idKey.SetValue("DisableLowILProcessIsolation", 1, RegistryValueKind.DWord);
+            }
 
-			// Modify preview handler registration
-			using (RegistryKey clsidKey = Registry.ClassesRoot.OpenSubKey("CLSID"))
-			using (RegistryKey idKey = clsidKey.OpenSubKey(previewerGuid, true))
-			{
-				idKey.SetValue("DisplayName", name, RegistryValueKind.String);
-				idKey.SetValue("AppID", appId, RegistryValueKind.String);
-				//idKey.SetValue("DisableLowILProcessIsolation", 1, RegistryValueKind.DWord);
-			}
+            foreach (var extension in extensions.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                Trace.WriteLine("Registering extension '" + extension + "' with previewer '" + previewerGuid + "'");
 
-			foreach (string extension in extensions.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
-			{
-				Trace.WriteLine("Registering extension '" + extension + "' with previewer '" + previewerGuid + "'");
+                // Set preview handler for specific extension
+                using (var extensionKey = Registry.ClassesRoot.CreateSubKey(extension))
+                using (var shellexKey = extensionKey.CreateSubKey("shellex"))
+                using (var previewKey = shellexKey.CreateSubKey("{8895b1c6-b41f-4c1c-a562-0d564250836f}"))
+                {
+                    previewKey.SetValue(null, previewerGuid, RegistryValueKind.String);
+                }
+            }
+        }
 
-				// Set preview handler for specific extension
-				using (RegistryKey extensionKey = Registry.ClassesRoot.CreateSubKey(extension))
-				using (RegistryKey shellexKey = extensionKey.CreateSubKey("shellex"))
-				using (RegistryKey previewKey = shellexKey.CreateSubKey("{8895b1c6-b41f-4c1c-a562-0d564250836f}"))
-				{
-					previewKey.SetValue(null, previewerGuid, RegistryValueKind.String);
-				}
-			}
-		}
-
-		protected static void UnregisterPreviewHandler(string extensions, string previewerGuid, string appId)
-		{
-			foreach (string extension in extensions.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
-			{
-				Trace.WriteLine("Unregistering extension '" + extension + "' with previewer '" + previewerGuid + "'");
-				using (RegistryKey shellexKey = Registry.ClassesRoot.OpenSubKey(extension + "\\shellex", true))
-				{
+        protected static void UnregisterPreviewHandler(string extensions, string previewerGuid, string appId)
+        {
+            foreach (var extension in extensions.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                Trace.WriteLine("Unregistering extension '" + extension + "' with previewer '" + previewerGuid + "'");
+                using (var shellexKey = Registry.ClassesRoot.OpenSubKey(extension + "\\shellex", true))
+                {
                     try { shellexKey.DeleteSubKey("{8895b1c6-b41f-4c1c-a562-0d564250836f}"); }
                     catch { }
-				}
-			}
+                }
+            }
 
-			using (RegistryKey appIdsKey = Registry.ClassesRoot.OpenSubKey("AppID", true))
-			{
+            using (var appIdsKey = Registry.ClassesRoot.OpenSubKey("AppID", true))
+            {
                 try { appIdsKey.DeleteSubKey(appId); }
                 catch { }
-			}
+            }
 
-			using (RegistryKey classesKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PreviewHandlers", true))
-			{
-				try { classesKey.DeleteValue(previewerGuid); }
+            using (var classesKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PreviewHandlers", true))
+            {
+                try { classesKey.DeleteValue(previewerGuid); }
                 catch { }
-			}
-		}
-	}
+            }
+        }
+    }
 }

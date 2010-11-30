@@ -1,8 +1,8 @@
+using System;
+using System.Runtime.InteropServices;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers.ComInterop
 {
-	using System;
-	using System.Runtime.InteropServices;
-
 	[ComImport]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	[Guid("fc4801a3-2ba9-11cf-a229-00aa003d7352")]

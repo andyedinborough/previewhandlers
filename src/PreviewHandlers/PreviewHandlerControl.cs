@@ -1,14 +1,14 @@
+using System;
+using System.IO;
+using System.Windows.Forms;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 {
-	using System;
-	using System.IO;
-	using System.Windows.Forms;
-
 	public abstract class PreviewHandlerControl : Form
 	{
 		protected PreviewHandlerControl()
 		{
-			base.FormBorderStyle = FormBorderStyle.None;
+			FormBorderStyle = FormBorderStyle.None;
 		}
 
 		public new abstract void Load(FileInfo file);
