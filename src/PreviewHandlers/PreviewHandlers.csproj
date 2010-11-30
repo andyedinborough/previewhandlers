@@ -37,7 +37,7 @@
   <ItemGroup>
     <Reference Include="Lonwas.Highlight, Version=2.3.2542.42987, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\References\Lonwas.Highlight.dll</HintPath>
+      <HintPath>..\..\lib\Lonwas.Highlight.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
