@@ -1,11 +1,8 @@
-using System;
 using System.IO;
-using System.Xml;
-
-using Lonwas.Highlight;
-using Lonwas.Highlight.Components;
-
-using FuelAdvance.PreviewHandlerPack.PreviewHandlers.Resources;
+using System.Xml.Linq;
+using Wayloop.Highlight;
+using Wayloop.Highlight.Configuration;
+using Wayloop.Highlight.Engines;
 
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 {
@@ -23,13 +20,9 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
 
         public static string GetHighlightedHtml(string definition, string source)
         {
-            //Load the configuration for the highlighter
-            XmlDocument highlighterConfig = new XmlDocument();
-            highlighterConfig.LoadXml(HighlightResources.Definitions);
-
-            //Highlight the source code
-            Highlighter highlighter = new Highlighter(highlighterConfig);
-            highlighter.OutputType = OutputType.Html;
+            var configuration = new XmlConfiguration(XDocument.Load(("Definitions.xml")));
+            var engine = new HtmlEngine();
+            Highlighter highlighter = new Highlighter(configuration, engine);
             string sourceHtml = highlighter.Highlight(source, definition);
 
             //Preserve the layout

@@ -1,14 +1,8 @@
+using System.IO;
+using System.Windows.Forms;
+
 namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers.Handlers
 {
-	using System.IO;
-	using System.Windows.Forms;
-	using System.Xml;
-
-	using FuelAdvance.PreviewHandlerPack.PreviewHandlers.Resources;
-
-    using Lonwas.Highlight;
-    using Lonwas.Highlight.Components;
-
 	public class CodePreviewHandlerControl : StreamBasedPreviewHandlerControl
 	{
 		private string _definition = string.Empty;
