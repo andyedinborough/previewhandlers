@@ -75,6 +75,11 @@
                     "Name" = "8:Microsoft .NET Framework 4 (x86 and x64)"
                     "ProductCode" = "8:.NETFramework,Version=v4.0"
                     }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.4.5"
+                    {
+                    "Name" = "8:Windows Installer 4.5"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.4.5"
+                    }
                 }
             }
         }
@@ -269,7 +274,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Preview Handler Pack"
         "ProductCode" = "8:{56C899E7-F067-4AE3-9CBE-788840205808}"
-        "PackageCode" = "8:{5845E1C4-04B0-4835-95BA-2D4FF78BA1A1}"
+        "PackageCode" = "8:{D2573D12-349D-4421-8A4D-5BE05A74C999}"
         "UpgradeCode" = "8:{81C32A02-02DF-4461-92AC-64D14B9183E0}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
