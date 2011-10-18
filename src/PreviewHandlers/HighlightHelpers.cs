@@ -20,7 +20,7 @@ namespace FuelAdvance.PreviewHandlerPack.PreviewHandlers
         {
             var engine = new HtmlEngine();
             var highlighter = new Highlighter(engine);
-            var sourceHtml = highlighter.Highlight(source, definition);
+            var sourceHtml = highlighter.Highlight(definition, source);
 
             sourceHtml = string.Format("<pre>{0}</pre>", sourceHtml);
 
